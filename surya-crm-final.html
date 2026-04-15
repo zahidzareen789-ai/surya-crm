@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Surya CRM">
+<meta name="theme-color" content="#0a0f1e">
+<title>Surya CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1e;--surface:#111827;--surface2:#1a2335;--border:#1f2d45;
+  --accent:#e63946;--accent2:#f97316;--text:#f0f4ff;--muted:#6b7fa3;--dim:#3a4a63;
+  --hot:#ef4444;--warm:#f97316;--cold:#3b82f6;--new:#8b5cf6;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;max-width:480px;margin:0 auto;min-height:100vh;}
+
+/* HEADER */
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:calc(12px + var(--st)) 16px 12px;background:rgba(10,15,30,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.hdr-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--text);}
+.hdr-title span{color:var(--accent);}
+
+/* SYNC BAR */
+.sync{display:flex;align-items:center;gap:7px;padding:7px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+.sdot.synced{background:#22c55e;}
+.sdot.syncing{background:var(--accent2);animation:pulse 1s infinite;}
+.sdot.error{background:var(--accent);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* BUTTONS */
+.btn{border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+.btn:active{opacity:0.8;}
+.btn-red{background:var(--accent);color:#fff;padding:9px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.btn-grey{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:9px 14px;font-size:14px;}
+.btn-back{background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px 0;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);padding:7px 12px;font-size:13px;border-radius:8px;cursor:pointer;}
+
+/* SEARCH */
+.search-wrap{padding:12px 16px 0;}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 14px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;outline:none;}
+.search-input::placeholder{color:var(--dim);}
+
+/* FILTERS */
+.filters{display:flex;gap:6px;padding:9px 16px;overflow-x:auto;scrollbar-width:none;}
+.filters::-webkit-scrollbar{display:none;}
+.fpill{border-radius:20px;padding:5px 12px;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;white-space:nowrap;border:2px solid transparent;color:#fff;}
+
+/* STATS */
+.stats{display:flex;gap:7px;padding:0 16px 10px;}
+.stat{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 4px;text-align:center;}
+.stat-n{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;display:block;}
+.stat-l{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+
+/* LIST */
+.list{padding:4px 16px calc(80px + var(--sb));}
+.empty{text-align:center;padding:50px 20px;color:var(--dim);font-size:14px;}
+
+/* ACCOUNT CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:9px;overflow:hidden;position:relative;}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,var(--dim));}
+.card-main{padding:13px 13px 10px 16px;cursor:pointer;}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.card-site{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);flex:1;margin-right:8px;line-height:1.3;}
+.sbadge{font-size:10px;font-family:'Syne',sans-serif;font-weight:800;border-radius:6px;padding:3px 7px;color:#fff;white-space:nowrap;}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+.tag{font-size:11px;background:var(--surface2);color:var(--muted);border-radius:6px;padding:2px 7px;}
+.tag-out{background:#0f2040;color:#60a5fa;}
+.tag-act{color:var(--accent2);}
+.tag-days{color:#22c55e;}
+
+/* QUICK LOG BUTTON */
+.card-actions{border-top:1px solid var(--border);display:flex;}
+.btn-log{flex:1;background:none;border:none;padding:10px;font-size:13px;font-weight:600;color:var(--accent2);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.2px;}
+.btn-log:active{background:var(--surface2);}
+.btn-view{background:none;border:none;border-left:1px solid var(--border);padding:10px 14px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* QUICK LOG SHEET */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:flex-end;}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + var(--sb));width:100%;max-width:480px;margin:0 auto;}
+.sheet-title{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:4px;}
+.sheet-site{font-size:13px;color:var(--muted);margin-bottom:18px;}
+.sheet-actions{display:flex;gap:8px;margin-top:16px;}
+
+/* STATUS PILLS */
+.spills{display:flex;gap:7px;flex-wrap:wrap;}
+.spill{border-radius:20px;padding:8px 15px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;color:#fff;opacity:0.35;}
+.spill.active{opacity:1;}
+
+/* DETAIL VIEW */
+.detail-body{padding:16px 16px calc(80px + var(--sb));}
+.d-hero{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;}
+.d-name{font-family:'Syne',sans-serif;font-weight:800;font-size:21px;margin-bottom:3px;}
+.d-addr{font-size:13px;color:var(--muted);margin-bottom:10px;}
+.d-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:9px;}
+.d-label{font-size:10px;font-family:'Syne',sans-serif;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.d-val{font-size:15px;color:var(--text);line-height:1.5;}
+.d-link{display:flex;align-items:center;gap:7px;color:#60a5fa;font-size:14px;text-decoration:none;margin-top:7px;padding:8px 11px;background:#0a1628;border-radius:8px;}
+.d-action{border-left:3px solid var(--accent2);}
+.btn-del{width:100%;background:none;border:1px solid #3a1a1a;color:#ef4444;border-radius:10px;padding:11px;font-weight:600;font-size:14px;cursor:pointer;margin-top:6px;}
+.obadge{display:inline-block;margin-top:5px;background:#0f2040;color:#60a5fa;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:600;}
+
+/* FORM */
+.form-body{padding:14px 16px calc(80px + var(--sb));}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 13px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field textarea{height:75px;resize:none;}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7fa3' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;}
+.field select option{background:var(--surface);}
+.sdiv{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.optional-toggle{font-size:13px;color:var(--muted);cursor:pointer;margin:4px 0 14px;display:flex;align-items:center;gap:5px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(20px + var(--sb));left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text);white-space:nowrap;z-index:999;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbz6jLX2DwpVqLlMgBMYMxk402iqNSu28vefs3BFsrzxj2QzuRm9HaB4rC9bm0-9ovG8/exec';
+const COLS=['id','siteName','address','decisionMaker','role','phone','email','status','lastVisit','outcome','nextAction','notes'];
+const SC={Hot:'#ef4444',Warm:'#f97316',Cold:'#3b82f6',New:'#8b5cf6'};
+const OUTCOMES=['Follow Up','Callback Requested','Samples Requested','Range Extended'];
+const TODAY=new Date().toISOString().split('T')[0];
+
+let S={
+  view:'list',
+  accounts:JSON.parse(localStorage.getItem('surya_v3')||'[]'),
+  selected:null,editing:null,
+  search:'',filterStatus:'All',
+  quickLog:null, // account being quick-logged
+  showOptional:false,
+  syncStatus:'syncing',syncMsg:'Loading...'
+};
+
+// ── SHEETS ──
+function r2a(r){const a={};COLS.forEach((c,i)=>a[c]=r[i]||'');return a;}
+function a2r(a){return COLS.map(c=>a[c]||'');}
+
+async function loadSheets(){
+  syncUI('syncing','Syncing...');
+  try{
+    const r=await fetch(SCRIPT_URL);
+    const d=await r.json();
+    const rows=(d.values||[]).slice(1).filter(r=>r[0]);
+    S.accounts=rows.map(r2a);
+    localStorage.setItem('surya_v3',JSON.stringify(S.accounts));
+    syncUI('synced',`Synced · ${S.accounts.length} sites`);
+    render();
+  }catch(e){
+    syncUI('error','Sync failed — using cached data');
+    render();
+  }
+}
+
+async function writeAll(){
+  syncUI('syncing','Saving...');
+  try{
+    await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({rows:S.accounts.map(a2r)}),headers:{'Content-Type':'text/plain'}});
+    localStorage.setItem('surya_v3',JSON.stringify(S.accounts));
+    syncUI('synced',`Saved · ${S.accounts.length} sites`);
+  }catch(e){
+    syncUI('error','Save failed');
+    toast('Could not save to Google Sheets');
+  }
+}
+
+function syncUI(st,msg){
+  S.syncStatus=st;S.syncMsg=msg;
+  const d=document.querySelector('.sdot');
+  const t=document.querySelector('.stext');
+  if(d)d.className='sdot '+st;
+  if(t)t.textContent=msg;
+}
+
+// ── HELPERS ──
+function newAcc(){return{id:String(Date.now()),siteName:'',address:'',decisionMaker:'',role:'',phone:'',email:'',status:'New',lastVisit:TODAY,outcome:'',nextAction:'',notes:''};}
+function daysAgo(d){if(!d)return null;const diff=Math.floor((new Date()-new Date(d))/(1000*60*60*24));return diff;}
+
+function getFiltered(){
+  return S.accounts.filter(a=>{
+    const q=S.search.toLowerCase();
+    const ms=!q||[a.siteName,a.decisionMaker,a.address].some(f=>(f||'').toLowerCase().includes(q));
+    const mf=S.filterStatus==='All'||a.status===S.filterStatus;
+    return ms&&mf;
+  }).sort((a,b)=>Number(b.id)-Number(a.id));
+}
+
+function getStats(){
+  const a=S.accounts;
+  return{total:a.length,hot:a.filter(x=>x.status==='Hot').length,actions:a.filter(x=>x.nextAction).length,visited:a.filter(x=>x.lastVisit===TODAY).length};
+}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function set(p){Object.assign(S,p);render();}
+function toast(msg,ms=2400){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
+
+// ── ACTIONS ──
+function doBack(){if(S.view==='form'&&S.selected)set({view:'detail',showOptional:false});else set({view:'list',selected:null,showOptional:false});}
+function doNew(){set({view:'form',editing:newAcc(),selected:null,showOptional:false});}
+function doEdit(acc){set({view:'form',editing:{...acc},showOptional:true});}
+function doDetail(acc){set({view:'detail',selected:acc});}
+function doQuickLog(acc){set({quickLog:{...acc,lastVisit:TODAY}});}
+function closeQuickLog(){set({quickLog:null});}
+
+function updEdit(k,v){S.editing={...S.editing,[k]:v};}
+function updQuick(k,v){S.quickLog={...S.quickLog,[k]:v};}
+
+async function doSave(){
+  const e=S.editing;
+  if(!e.siteName.trim()){toast('Site name is required');return;}
+  const idx=S.accounts.findIndex(a=>a.id===e.id);
+  S.accounts=idx>=0?S.accounts.map(a=>a.id===e.id?e:a):[e,...S.accounts];
+  set({view:'list',editing:null,selected:null});
+  toast('Saving...');
+  await writeAll();
+  toast('✅ Saved');
+}
+
+async function doSaveQuick(){
+  const q=S.quickLog;
+  if(!q)return;
+  S.accounts=S.accounts.map(a=>a.id===q.id?q:a);
+  set({quickLog:null});
+  render();
+  toast('Saving...');
+  await writeAll();
+  toast('✅ Visit logged');
+}
+
+async function doDelete(id){
+  if(!confirm('Delete this account?'))return;
+  S.accounts=S.accounts.filter(a=>a.id!==id);
+  set({view:'list',selected:null});
+  toast('Deleting...');
+  await writeAll();
+  toast('Deleted');
+}
+
+// ── RENDER ──
+function syncBar(){return`<div class="sync"><div class="sdot ${S.syncStatus}"></div><span class="stext">${esc(S.syncMsg)}</span></div>`;}
+
+function renderList(){
+  const f=getFiltered();const st=getStats();
+  const cards=f.length===0?`<div class="empty">No accounts yet. Tap <strong>+ New</strong> to add your first site.</div>`:
+    f.map(a=>{
+      const days=daysAgo(a.lastVisit);
+      const daysTag=days===0?`<span class="tag tag-days">Visited today</span>`:days!==null&&days<=7?`<span class="tag tag-days">${days}d ago</span>`:'';
+      return`<div class="card" style="--sc:${SC[a.status]||'#3a4a63'}">
+        <div class="card-main" data-id="${a.id}">
+          <div class="card-top">
+            <div class="card-site">${esc(a.siteName)}</div>
+            <span class="sbadge" style="background:${SC[a.status]||'#3a4a63'}">${esc(a.status)}</span>
+          </div>
+          ${a.decisionMaker?`<div class="card-sub">👤 ${esc(a.decisionMaker)}${a.role?` · ${esc(a.role)}`:''}</div>`:''}
+          ${a.address?`<div class="card-sub">📍 ${esc(a.address)}</div>`:''}
+          <div class="card-tags">
+            ${daysTag}
+            ${a.outcome?`<span class="tag tag-out">${esc(a.outcome)}</span>`:''}
+            ${a.nextAction?`<span class="tag tag-act">→ ${esc(a.nextAction)}</span>`:''}
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-log" data-log="${a.id}">📋 Log Visit</button>
+          <button class="btn-view" data-view="${a.id}">Details ›</button>
+        </div>
+      </div>`;
+    }).join('');
+
+  return`
+    <div class="hdr">
+      <div class="hdr-title">Surya <span>CRM</span></div>
+      <button class="btn btn-red" id="b-new">+ New</button>
+    </div>
+    ${syncBar()}
+    <div class="search-wrap"><input class="search-input" id="b-search" placeholder="🔍  Search sites or contacts..." value="${esc(S.search)}" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+    <div class="filters">
+      ${['All','Hot','Warm','Cold','New'].map(s=>`<button class="fpill" data-fs="${s}" style="background:${S.filterStatus===s?(SC[s]||'#334155'):'#1a2335'};border-color:${S.filterStatus===s?(SC[s]||'#64748b'):'#1f2d45'}">${s}</button>`).join('')}
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-n">${st.total}</span><span class="stat-l">Sites</span></div>
+      <div class="stat"><span class="stat-n" style="color:#ef4444">${st.hot}</span><span class="stat-l">Hot</span></div>
+      <div class="stat"><span class="stat-n" style="color:#22c55e">${st.visited}</span><span class="stat-l">Today</span></div>
+      <div class="stat"><span class="stat-n" style="color:#f97316">${st.actions}</span><span class="stat-l">Actions</span></div>
+    </div>
+    <div class="list" id="list-body">${cards}</div>
+    ${S.quickLog?renderQuickLog():''}`;
+}
+
+function renderQuickLog(){
+  const q=S.quickLog;
+  return`<div class="sheet-overlay" id="ql-overlay">
+    <div class="sheet" style="max-height:90vh;overflow-y:auto;">
+      <div class="sheet-title">Log Visit</div>
+      <div class="sheet-site">${esc(q.siteName)}</div>
+      <div class="field">
+        <label>Status</label>
+        <div class="spills">
+          ${['Hot','Warm','Cold','New'].map(s=>`<button class="spill ${q.status===s?'active':''}" data-qst="${s}" style="background:${SC[s]};border-color:${SC[s]}">${s}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Outcome</label>
+        <select id="ql-outcome">
+          <option value="">Select outcome...</option>
+          ${OUTCOMES.map(o=>`<option value="${o}" ${q.outcome===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Next Action</label>
+        <input id="ql-action" value="${esc(q.nextAction)}" placeholder="e.g. Call back Friday, Send samples" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Decision Maker</label>
+        <input id="ql-dm" value="${esc(q.decisionMaker)}" placeholder="Contact name" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <input id="ql-role" value="${esc(q.role)}" placeholder="e.g. Head Chef, Owner" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input id="ql-phone" type="tel" value="${esc(q.phone)}" placeholder="07...">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="ql-notes" placeholder="Anything useful from this visit...">${esc(q.notes)}</textarea>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-grey" style="flex:1" id="ql-cancel">Cancel</button>
+        <button class="btn btn-red" style="flex:2" id="ql-save">Save Visit</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderDetail(){
+  const acc=S.accounts.find(a=>a.id===S.selected.id)||S.selected;
+  const col=SC[acc.status]||'#3a4a63';
+  const days=daysAgo(acc.lastVisit);
+  return`
+    <div class="hdr">
+      <button class="btn-back" id="b-back">← Back</button>
+      <div class="hdr-title">Account</div>
+      <button class="btn btn-grey" id="b-edit">Edit</button>
+    </div>
+    ${syncBar()}
+    <div class="detail-body">
+      <div class="d-hero">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="d-name">${esc(acc.siteName)}</div>
+          <span class="sbadge" style="background:${col};margin-left:8px">${esc(acc.status)}</span>
+        </div>
+        ${acc.address?`<div class="d-addr">📍 ${esc(acc.address)}</div>`:''}
+        <button class="btn btn-red" style="width:100%;margin-top:4px" data-log="${acc.id}">📋 Log Visit Now</button>
+      </div>
+      <div class="d-card">
+        <div class="d-label">Key Decision Maker</div>
+        ${acc.decisionMaker?`<div class="d-val">${esc(acc.decisionMaker)}${acc.role?`<span style="color:var(--muted);font-size:13px"> · ${esc(acc.role)}</span>`:''}</div>`:`<div style="color:var(--dim);font-size:14px">Not recorded</div>`}
+        ${acc.phone?`<a href="tel:${esc(acc.phone)}" class="d-link">📞 ${esc(acc.phone)}</a>`:''}
+        ${acc.email?`<a href="mailto:${esc(acc.email)}" class="d-link">✉️ ${esc(acc.email)}</a>`:''}
+      </div>
+      <div class="d-card">
+        <div class="d-label">Last Visit</div>
+        <div class="d-val">${acc.lastVisit||'Not recorded'}${days===0?' · Today':days!==null?` · ${days} days ago`:''}</div>
+        ${acc.outcome?`<div class="obadge">${esc(acc.outcome)}</div>`:''}
+      </div>
+      ${acc.nextAction?`<div class="d-card d-action"><div class="d-label">Next Action</div><div class="d-val">${esc(acc.nextAction)}</div></div>`:''}
+      ${acc.notes?`<div class="d-card"><div class="d-label">Notes</div><div class="d-val" style="color:var(--muted);font-size:14px;line-height:1.6">${esc(acc.notes)}</div></div>`:''}
+      <button class="btn-del" id="b-delete">Delete Account</button>
+    </div>
+    ${S.quickLog?renderQuickLog():''}`;
+}
+
+function renderForm(){
+  const e=S.editing;
+  const isEdit=S.accounts.some(a=>a.id===e.id);
+  return`
+    <div class="hdr">
+      <button class="btn-back" id="b-back">← Back</button>
+      <div class="hdr-title">${isEdit?'Edit':'New Account'}</div>
+      <div></div>
+    </div>
+    ${syncBar()}
+    <div class="form-body">
+      <div class="field"><label>Site Name *</label><input id="f-siteName" value="${esc(e.siteName)}" placeholder="e.g. The Crown, Manchester" autocomplete="off"></div>
+      <div class="field"><label>Status</label>
+        <div class="spills">
+          ${['Hot','Warm','Cold','New'].map(s=>`<button class="spill ${e.status===s?'active':''}" data-sp="${s}" style="background:${SC[s]};border-color:${SC[s]}">${s}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field"><label>Decision Maker</label><input id="f-decisionMaker" value="${esc(e.decisionMaker)}" placeholder="Contact name" autocomplete="off"></div>
+      <div class="field"><label>Role</label><input id="f-role" value="${esc(e.role)}" placeholder="e.g. Head Chef, Owner" autocomplete="off"></div>
+      <div class="field"><label>Phone</label><input id="f-phone" type="tel" value="${esc(e.phone)}" placeholder="07..."></div>
+
+      <div class="sdiv">Visit Details</div>
+      <div class="field"><label>Last Visit Date</label><input id="f-lastVisit" type="date" value="${esc(e.lastVisit)}"></div>
+      <div class="field"><label>Outcome</label>
+        <select id="f-outcome"><option value="">Select outcome...</option>${OUTCOMES.map(o=>`<option value="${o}" ${e.outcome===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Next Action</label><input id="f-nextAction" value="${esc(e.nextAction)}" placeholder="e.g. Call back Friday" autocomplete="off"></div>
+
+      <div class="sdiv" id="opt-toggle" style="cursor:pointer">Optional ↓</div>
+      ${S.showOptional?`
+      <div class="field"><label>Address</label><input id="f-address" value="${esc(e.address)}" placeholder="Street, City, Postcode" autocomplete="off"></div>
+      <div class="field"><label>Email</label><input id="f-email" type="email" value="${esc(e.email)}" placeholder="email@site.com"></div>
+      <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Any useful context...">${esc(e.notes)}</textarea></div>
+      `:'<div style="color:var(--dim);font-size:13px;margin-bottom:16px">Address, email, notes</div>'}
+      <button class="btn btn-red" id="b-save" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:12px">Save Account</button>
+    </div>`;
+}
+
+function render(){
+  const app=document.getElementById('app');
+  if(S.view==='form')app.innerHTML=renderForm();
+  else if(S.view==='detail'&&S.selected)app.innerHTML=renderDetail();
+  else app.innerHTML=renderList();
+  bind();
+}
+
+// ── BIND ──
+function bind(){
+  const g=id=>document.getElementById(id);
+
+  // Nav
+  if(g('b-new'))g('b-new').onclick=doNew;
+  if(g('b-back'))g('b-back').onclick=doBack;
+  if(g('b-save'))g('b-save').onclick=doSave;
+  if(g('b-edit'))g('b-edit').onclick=()=>{const a=S.accounts.find(a=>a.id===S.selected.id);doEdit(a);};
+  if(g('b-delete'))g('b-delete').onclick=()=>doDelete(S.selected.id);
+
+  // Search — update state without re-rendering so keyboard stays up
+  if(g('b-search')){
+    g('b-search').oninput=e=>{
+      S.search=e.target.value;
+      // Only re-render the cards, not the whole page
+      const lb=document.getElementById('list-body');
+      if(lb){
+        const f=getFiltered();
+        lb.innerHTML=f.length===0?`<div class="empty">No results found.</div>`:
+          f.map(a=>{
+            const days=daysAgo(a.lastVisit);
+            const daysTag=days===0?`<span class="tag tag-days">Visited today</span>`:days!==null&&days<=7?`<span class="tag tag-days">${days}d ago</span>`:'';
+            return`<div class="card" style="--sc:${SC[a.status]||'#3a4a63'}">
+              <div class="card-main" data-id="${a.id}">
+                <div class="card-top"><div class="card-site">${esc(a.siteName)}</div><span class="sbadge" style="background:${SC[a.status]||'#3a4a63'}">${esc(a.status)}</span></div>
+                ${a.decisionMaker?`<div class="card-sub">👤 ${esc(a.decisionMaker)}${a.role?` · ${esc(a.role)}`:''}</div>`:''}
+                <div class="card-tags">${daysTag}${a.outcome?`<span class="tag tag-out">${esc(a.outcome)}</span>`:''}${a.nextAction?`<span class="tag tag-act">→ ${esc(a.nextAction)}</span>`:''}</div>
+              </div>
+              <div class="card-actions">
+                <button class="btn-log" data-log="${a.id}">📋 Log Visit</button>
+                <button class="btn-view" data-view="${a.id}">Details ›</button>
+              </div>
+            </div>`;
+          }).join('');
+        bindCards();
+      }
+    };
+  }
+
+  // Filters
+  document.querySelectorAll('[data-fs]').forEach(b=>b.onclick=()=>set({filterStatus:b.dataset.fs}));
+
+  // Form fields — blur only, no re-render while typing
+  ['siteName','address','decisionMaker','role','phone','email','lastVisit','nextAction'].forEach(k=>{
+    const el=g('f-'+k);if(el)el.onblur=e=>updEdit(k,e.target.value);
+  });
+  const fo=g('f-outcome');if(fo)fo.onchange=e=>updEdit('outcome',e.target.value);
+  const fn=g('f-notes');if(fn)fn.onblur=e=>updEdit('notes',e.target.value);
+
+  // Status pills on form
+  document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{updEdit('status',b.dataset.sp);render();});
+
+  // Optional toggle
+  const ot=g('opt-toggle');if(ot)ot.onclick=()=>set({showOptional:!S.showOptional});
+
+  // Quick log sheet
+  if(g('ql-cancel'))g('ql-cancel').onclick=closeQuickLog;
+  if(g('ql-save'))g('ql-save').onclick=()=>{
+    const fields={outcome:'ql-outcome',nextAction:'ql-action',decisionMaker:'ql-dm',role:'ql-role',phone:'ql-phone',notes:'ql-notes'};
+    Object.entries(fields).forEach(([k,id])=>{const el=g(id);if(el)updQuick(k,el.value);});
+    doSaveQuick();
+  };
+  if(g('ql-overlay'))g('ql-overlay').onclick=e=>{if(e.target===g('ql-overlay'))closeQuickLog();};
+  document.querySelectorAll('[data-qst]').forEach(b=>b.onclick=()=>{updQuick('status',b.dataset.qst);render();});
+
+  // Quick log outcome/action inputs — no re-render while typing
+  const qo=g('ql-outcome');if(qo)qo.onchange=e=>updQuick('outcome',e.target.value);
+  ['ql-action','ql-dm','ql-role','ql-phone','ql-notes'].forEach(id=>{
+    const el=g(id);if(el)el.addEventListener('blur',()=>{});
+  });
+
+  bindCards();
+}
+
+function bindCards(){
+  document.querySelectorAll('[data-log]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const a=S.accounts.find(a=>a.id===b.dataset.log);
+    if(a)doQuickLog(a);
+  });
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const a=S.accounts.find(a=>a.id===b.dataset.view);
+    if(a)doDetail(a);
+  });
+  document.querySelectorAll('.card-main').forEach(c=>c.onclick=()=>{
+    const a=S.accounts.find(a=>a.id==c.dataset.id);
+    if(a)doDetail(a);
+  });
+}
+
+// ── BOOT ──
+render();
+loadSheets();
+</script>
+</body>
+</html>
